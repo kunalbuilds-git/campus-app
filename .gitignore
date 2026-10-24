@@ -1,0 +1,29 @@
+﻿# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Local tools and agent configuration
+.dart_skills/
+.agents/
+.claude/
+.codex/
+.cursor/
+.opencode/
+.mcp.json
+
+# Dart and Flutter generated files
+.dart_tool/
+.packages
+build/
+**/build/
+
+# OS files
+.DS_Store
+Thumbs.db
