@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:serverpod_auth_idp_server/core.dart';
+import 'package:serverpod_auth_idp_server/providers/anonymous.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
+import 'src/events/event_seeder.dart';
 import 'src/generated/serverpod.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/root.dart';
@@ -33,6 +35,10 @@ void run(List<String> args) async {
       ServerpodCloudEmailIdpConfig(
         appDisplayName: 'campus_quiz',
       ),
+      // Configure the anonymous identity provider so a visitor can use the
+      // app without registering. Anonymous accounts get a Serverpod auth user
+      // id, which is what the RSVP endpoints store against an event.
+      AnonymousIdpConfig(),
     ],
   );
 
@@ -100,4 +106,11 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  // Seed the sample campus events in development. The seeder only inserts
+  // when the event table is empty, so restarting the server never changes
+  // the data.
+  if (pod.runMode == ServerpodRunMode.development) {
+    await EventSeeder.seedIfEmpty(pod);
+  }
 }

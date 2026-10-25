@@ -1,0 +1,10 @@
+### Category used to group events in the campus app.
+enum: EventCategory
+values:
+  - sports
+  - cultural
+  - academic
+  - tech
+  - workshop
+  - community
+  - other

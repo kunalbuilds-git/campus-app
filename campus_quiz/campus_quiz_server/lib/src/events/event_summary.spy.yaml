@@ -1,0 +1,11 @@
+### An event with its current RSVP counts, used by list and detail views.
+class: EventSummary
+fields:
+  ### The event itself.
+  event: Event
+
+  ### Number of `going` RSVPs.
+  goingCount: int
+
+  ### Number of `interested` RSVPs.
+  interestedCount: int

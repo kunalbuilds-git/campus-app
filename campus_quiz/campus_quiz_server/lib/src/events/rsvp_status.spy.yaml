@@ -1,0 +1,5 @@
+### The attendance status a user can register for an event.
+enum: RsvpStatus
+values:
+  - going
+  - interested
