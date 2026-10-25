@@ -1,0 +1,24 @@
+### A user's RSVP to an event.
+class: Rsvp
+table: rsvp
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### The event this RSVP belongs to.
+  event: Event?, relation(onDelete=Cascade)
+
+  ### The Serverpod auth user identifier of the attendee.
+  authUserId: String
+
+  ### The attendance status registered by the user.
+  status: RsvpStatus
+
+  ### Time the RSVP was first created.
+  createdAt: DateTime, defaultModel=now
+indexes:
+  ### One RSVP per user and event. RSVPs are upserted against this index.
+  rsvp_event_user_unique_idx:
+    fields: eventId, authUserId
+    unique: true
+  rsvp_user_idx:
+    fields: authUserId

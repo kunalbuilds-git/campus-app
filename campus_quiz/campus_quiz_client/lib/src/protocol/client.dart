@@ -11,6 +11,9 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:campus_quiz_client/src/protocol/events/event_summary.dart'
+    as _id5dtabc;
+import 'package:campus_quiz_client/src/protocol/events/rsvp.dart' as _ihpaob0u;
 import 'package:campus_quiz_client/src/protocol/greetings/greeting.dart'
     as _ifozo9te;
 import 'package:http/http.dart' as _i85jenna;
@@ -20,6 +23,30 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
+
+/// By extending [AnonymousIdpBaseEndpoint], anonymous account creation is
+/// enabled, so the app can give every visitor an identity without a
+/// registered account. The identity can later be upgraded to an email
+/// account through the email sign-in flow.
+/// {@category Endpoint}
+class EndpointAnonymousIdp extends _iaic.EndpointAnonymousIdpBase {
+  EndpointAnonymousIdp(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'anonymousIdp';
+
+  /// Creates a new anonymous account and returns its session.
+  ///
+  /// Invokes the [AnonymousIdp.beforeAnonymousAccount] callback if configured,
+  /// which may prevent account creation if the endpoint is protected.
+  @override
+  _ida.Future<_iacc.AuthSuccess> login({String? token}) =>
+      caller.callServerEndpoint<_iacc.AuthSuccess>(
+        'anonymousIdp',
+        'login',
+        {'token': token},
+      );
+}
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -246,6 +273,80 @@ class EndpointJwtRefresh extends _iacc.EndpointRefreshJwtTokens {
       );
 }
 
+/// Public API of the campus events feed.
+///
+/// Reading events is open to everyone; RSVP endpoints require an
+/// authenticated user (anonymous accounts count as authenticated).
+/// {@category Endpoint}
+class EndpointEvents extends _isc.EndpointRef {
+  EndpointEvents(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'events';
+
+  /// Lists events ordered by start time, with their RSVP counts.
+  ///
+  /// [category] must be an [EventCategory] name, [upcomingOnly] excludes
+  /// events that have already ended, and [limit] is clamped to 1..100.
+  ///
+  /// The parameters are nullable so that they stay optional in the client
+  /// protocol; the defaults are applied here.
+  _ida.Future<List<_id5dtabc.EventSummary>> listEvents({
+    String? category,
+    bool? upcomingOnly,
+    int? limit,
+  }) => caller.callServerEndpoint<List<_id5dtabc.EventSummary>>(
+    'events',
+    'listEvents',
+    {
+      'category': category,
+      'upcomingOnly': upcomingOnly,
+      'limit': limit,
+    },
+  );
+
+  /// Returns a single event with its RSVP counts.
+  _ida.Future<_id5dtabc.EventSummary> getEvent(_isc.UuidValue eventId) =>
+      caller.callServerEndpoint<_id5dtabc.EventSummary>(
+        'events',
+        'getEvent',
+        {'eventId': eventId},
+      );
+
+  /// Registers or updates the signed-in user's RSVP to an event.
+  ///
+  /// Passing a different [status] updates the existing RSVP, so calling
+  /// this twice is safe. The status defaults to `going`.
+  _ida.Future<_ihpaob0u.Rsvp> rsvp(
+    _isc.UuidValue eventId, {
+    String? status,
+  }) => caller.callServerEndpoint<_ihpaob0u.Rsvp>(
+    'events',
+    'rsvp',
+    {
+      'eventId': eventId,
+      'status': status,
+    },
+  );
+
+  /// Cancels the signed-in user's RSVP to an event. Cancelling an RSVP the
+  /// user does not have is not an error.
+  _ida.Future<void> cancelRsvp(_isc.UuidValue eventId) =>
+      caller.callServerEndpoint<void>(
+        'events',
+        'cancelRsvp',
+        {'eventId': eventId},
+      );
+
+  /// Returns the signed-in user's RSVPs, newest first, with their events.
+  _ida.Future<List<_ihpaob0u.Rsvp>> myRsvps() =>
+      caller.callServerEndpoint<List<_ihpaob0u.Rsvp>>(
+        'events',
+        'myRsvps',
+        {},
+      );
+}
+
 /// This is an example endpoint that returns a greeting message through
 /// its [hello] method.
 /// {@category Endpoint}
@@ -302,15 +403,21 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    anonymousIdp = EndpointAnonymousIdp(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
+    events = EndpointEvents(this);
     greeting = EndpointGreeting(this);
     modules = Modules(this);
   }
 
+  late final EndpointAnonymousIdp anonymousIdp;
+
   late final EndpointEmailIdp emailIdp;
 
   late final EndpointJwtRefresh jwtRefresh;
+
+  late final EndpointEvents events;
 
   late final EndpointGreeting greeting;
 
@@ -318,8 +425,10 @@ class Client extends _isc.ServerpodClientShared {
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'anonymousIdp': anonymousIdp,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
+    'events': events,
     'greeting': greeting,
   };
 

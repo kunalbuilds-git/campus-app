@@ -1,3 +1,5 @@
+anonymousIdp:
+  - login:
 emailIdp:
   - login:
   - startRegistration:
@@ -9,5 +11,11 @@ emailIdp:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:
+events:
+  - listEvents:
+  - getEvent:
+  - rsvp:
+  - cancelRsvp:
+  - myRsvps:
 greeting:
   - hello:

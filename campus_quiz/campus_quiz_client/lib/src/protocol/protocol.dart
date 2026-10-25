@@ -11,12 +11,27 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:campus_quiz_client/src/protocol/events/event_summary.dart'
+    as _id5dtabc;
+import 'package:campus_quiz_client/src/protocol/events/rsvp.dart' as _ihpaob0u;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
+import 'events/event.dart' as _iq09ghc5;
+import 'events/event_category.dart' as _in056s28;
+import 'events/event_exception.dart' as _ikkdwwzc;
+import 'events/event_summary.dart' as _i41vm8xm;
+import 'events/rsvp.dart' as _ibgfe0cw;
+import 'events/rsvp_status.dart' as _i8nmnugq;
 import 'greetings/greeting.dart' as _izw8z7ou;
+export 'events/event.dart';
+export 'events/event_category.dart';
+export 'events/event_exception.dart';
+export 'events/event_summary.dart';
+export 'events/rsvp.dart';
+export 'events/rsvp_status.dart';
 export 'greetings/greeting.dart';
 export 'client.dart';
 
@@ -54,11 +69,59 @@ class Protocol extends _isc.SerializationManager {
       }
     }
 
+    if (t == _iq09ghc5.Event) {
+      return _iq09ghc5.Event.fromJson(data) as T;
+    }
+    if (t == _in056s28.EventCategory) {
+      return _in056s28.EventCategory.fromJson(data) as T;
+    }
+    if (t == _ikkdwwzc.EventException) {
+      return _ikkdwwzc.EventException.fromJson(data) as T;
+    }
+    if (t == _i41vm8xm.EventSummary) {
+      return _i41vm8xm.EventSummary.fromJson(data) as T;
+    }
+    if (t == _ibgfe0cw.Rsvp) {
+      return _ibgfe0cw.Rsvp.fromJson(data) as T;
+    }
+    if (t == _i8nmnugq.RsvpStatus) {
+      return _i8nmnugq.RsvpStatus.fromJson(data) as T;
+    }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
     }
+    if (t == _isc.getType<_iq09ghc5.Event?>()) {
+      return (data != null ? _iq09ghc5.Event.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_in056s28.EventCategory?>()) {
+      return (data != null ? _in056s28.EventCategory.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_ikkdwwzc.EventException?>()) {
+      return (data != null ? _ikkdwwzc.EventException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _isc.getType<_i41vm8xm.EventSummary?>()) {
+      return (data != null ? _i41vm8xm.EventSummary.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ibgfe0cw.Rsvp?>()) {
+      return (data != null ? _ibgfe0cw.Rsvp.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_i8nmnugq.RsvpStatus?>()) {
+      return (data != null ? _i8nmnugq.RsvpStatus.fromJson(data) : null) as T;
+    }
     if (t == _isc.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == List<_id5dtabc.EventSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_id5dtabc.EventSummary>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_ihpaob0u.Rsvp>) {
+      return (data as List).map((e) => deserialize<_ihpaob0u.Rsvp>(e)).toList()
+          as T;
     }
     try {
       return _iaic.Protocol().deserialize<T>(data, t);
@@ -71,6 +134,12 @@ class Protocol extends _isc.SerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _iq09ghc5.Event => 'Event',
+      _in056s28.EventCategory => 'EventCategory',
+      _ikkdwwzc.EventException => 'EventException',
+      _i41vm8xm.EventSummary => 'EventSummary',
+      _ibgfe0cw.Rsvp => 'Rsvp',
+      _i8nmnugq.RsvpStatus => 'RsvpStatus',
       _izw8z7ou.Greeting => 'Greeting',
       _ => null,
     };
@@ -86,6 +155,18 @@ class Protocol extends _isc.SerializationManager {
     }
 
     switch (data) {
+      case _iq09ghc5.Event():
+        return 'Event';
+      case _in056s28.EventCategory():
+        return 'EventCategory';
+      case _ikkdwwzc.EventException():
+        return 'EventException';
+      case _i41vm8xm.EventSummary():
+        return 'EventSummary';
+      case _ibgfe0cw.Rsvp():
+        return 'Rsvp';
+      case _i8nmnugq.RsvpStatus():
+        return 'RsvpStatus';
       case _izw8z7ou.Greeting():
         return 'Greeting';
     }
@@ -109,6 +190,24 @@ class Protocol extends _isc.SerializationManager {
     var dataClassName = data['className'];
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
+    }
+    if (dataClassName == 'Event') {
+      return deserialize<_iq09ghc5.Event>(data['data']);
+    }
+    if (dataClassName == 'EventCategory') {
+      return deserialize<_in056s28.EventCategory>(data['data']);
+    }
+    if (dataClassName == 'EventException') {
+      return deserialize<_ikkdwwzc.EventException>(data['data']);
+    }
+    if (dataClassName == 'EventSummary') {
+      return deserialize<_i41vm8xm.EventSummary>(data['data']);
+    }
+    if (dataClassName == 'Rsvp') {
+      return deserialize<_ibgfe0cw.Rsvp>(data['data']);
+    }
+    if (dataClassName == 'RsvpStatus') {
+      return deserialize<_i8nmnugq.RsvpStatus>(data['data']);
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);

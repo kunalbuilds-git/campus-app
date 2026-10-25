@@ -15,14 +15,22 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import '../auth/anonymous_idp_endpoint.dart' as _in0zita6;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
+import '../events/events_endpoint.dart' as _iwysfsn2;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'anonymousIdp': _in0zita6.AnonymousIdpEndpoint()
+        ..initialize(
+          server,
+          'anonymousIdp',
+          null,
+        ),
       'emailIdp': _iuc1hd5t.EmailIdpEndpoint()
         ..initialize(
           server,
@@ -35,6 +43,12 @@ class Endpoints extends _is.EndpointDispatch {
           'jwtRefresh',
           null,
         ),
+      'events': _iwysfsn2.EventsEndpoint()
+        ..initialize(
+          server,
+          'events',
+          null,
+        ),
       'greeting': _il624ik7.GreetingEndpoint()
         ..initialize(
           server,
@@ -42,6 +56,32 @@ class Endpoints extends _is.EndpointDispatch {
           null,
         ),
     };
+    connectors['anonymousIdp'] = _is.EndpointConnector(
+      name: 'anonymousIdp',
+      endpoint: endpoints['anonymousIdp']!,
+      methodConnectors: {
+        'login': _is.MethodConnector(
+          name: 'login',
+          params: {
+            'token': _is.ParameterDescription(
+              name: 'token',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['anonymousIdp'] as _in0zita6.AnonymousIdpEndpoint)
+                      .login(
+                        session,
+                        token: params['token'],
+                      ),
+        ),
+      },
+    );
     connectors['emailIdp'] = _is.EndpointConnector(
       name: 'emailIdp',
       endpoint: endpoints['emailIdp']!,
@@ -245,6 +285,115 @@ class Endpoints extends _is.EndpointDispatch {
                         session,
                         refreshToken: params['refreshToken'],
                       ),
+        ),
+      },
+    );
+    connectors['events'] = _is.EndpointConnector(
+      name: 'events',
+      endpoint: endpoints['events']!,
+      methodConnectors: {
+        'listEvents': _is.MethodConnector(
+          name: 'listEvents',
+          params: {
+            'category': _is.ParameterDescription(
+              name: 'category',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'upcomingOnly': _is.ParameterDescription(
+              name: 'upcomingOnly',
+              type: _is.getType<bool?>(),
+              nullable: true,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['events'] as _iwysfsn2.EventsEndpoint).listEvents(
+                    session,
+                    category: params['category'],
+                    upcomingOnly: params['upcomingOnly'],
+                    limit: params['limit'],
+                  ),
+        ),
+        'getEvent': _is.MethodConnector(
+          name: 'getEvent',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['events'] as _iwysfsn2.EventsEndpoint).getEvent(
+                    session,
+                    params['eventId'],
+                  ),
+        ),
+        'rsvp': _is.MethodConnector(
+          name: 'rsvp',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'status': _is.ParameterDescription(
+              name: 'status',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['events'] as _iwysfsn2.EventsEndpoint).rsvp(
+                session,
+                params['eventId'],
+                status: params['status'],
+              ),
+        ),
+        'cancelRsvp': _is.MethodConnector(
+          name: 'cancelRsvp',
+          params: {
+            'eventId': _is.ParameterDescription(
+              name: 'eventId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['events'] as _iwysfsn2.EventsEndpoint).cancelRsvp(
+                    session,
+                    params['eventId'],
+                  ),
+        ),
+        'myRsvps': _is.MethodConnector(
+          name: 'myRsvps',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['events'] as _iwysfsn2.EventsEndpoint)
+                  .myRsvps(session),
         ),
       },
     );

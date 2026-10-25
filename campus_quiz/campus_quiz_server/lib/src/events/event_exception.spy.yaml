@@ -1,0 +1,8 @@
+### Exception reported to the client when an events request cannot be fulfilled.
+exception: EventException
+fields:
+  ### Machine-readable error code, e.g. `EVENT_NOT_FOUND`.
+  code: String
+
+  ### Human-readable message for display in the app.
+  message: String

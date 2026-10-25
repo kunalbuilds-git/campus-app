@@ -1,0 +1,35 @@
+### An event published on the campus events feed.
+class: Event
+table: event
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### Short display title of the event.
+  title: String
+
+  ### Longer free-text description shown on the event details screen.
+  description: String
+
+  ### When the event starts.
+  startsAt: DateTime
+
+  ### When the event ends. Null for open-ended events.
+  endsAt: DateTime?
+
+  ### Where the event takes place.
+  location: String
+
+  ### Name of the organizing student club or department.
+  organizer: String
+
+  ### Maximum number of `going` RSVPs. Null means unlimited.
+  capacity: int?
+
+  ### Category used for filtering in the app.
+  category: EventCategory
+
+  ### Time the event was published.
+  createdAt: DateTime, defaultModel=now
+indexes:
+  event_starts_at_idx:
+    fields: startsAt

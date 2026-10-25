@@ -47,4 +47,37 @@ If the user asks you to test the app:
 
 The app is launched from `campus_quiz_flutter/lib/driver.dart`, which starts the Flutter driver extension with text entry emulation turned off so the app stays usable by hand. To let the driver type, set `enableTextEntryEmulation: true` there and `hot_restart` the app.
 
-IMPORTANT: After building the first version of the app, update this AGENTS.md file with information about the app we're building. KEEP the info about the MCP server and the checklist. Remove this paragraph.
+## The app we are building
+
+A campus events app. Students browse the events published by clubs and
+departments, open an event to see the details, and RSVP as `going` or
+`interested`.
+
+Content is seeded on the server instead of managed through an admin UI, so
+there is no authoring screen in the app. Authentication is optional: a visitor
+gets an anonymous Serverpod account with one tap and can RSVP immediately, and
+an email account can be added later for an identity that follows them to
+another device. Both kinds of account are authenticated for the RSVP
+endpoints.
+
+Backend layout:
+
+- `campus_quiz_server/lib/src/events/` — the models (`*.spy.yaml`), the
+  `events` endpoint, and the seeder.
+- `campus_quiz_server/lib/src/auth/` — the identity provider endpoints.
+  `EmailIdpEndpoint` and `JwtRefreshEndpoint` come with the Serverpod starter;
+  `AnonymousIdpEndpoint` was added for the guest flow.
+- `campus_quiz_server/lib/server.dart` — auth setup, web routes, and the
+  development seeding call.
+
+Conventions to follow:
+
+- Models live in `*.spy.yaml` files. After changing a model or an endpoint,
+  regenerate with `serverpod generate` (or let `serverpod start` do it) so
+  `campus_quiz_client` stays in sync. The client package is generated code
+  and is committed.
+- The seeder only inserts when the event table is empty, so restarting the
+  server never changes existing data.
+- The Flutter app still contains the Serverpod starter demo screens. The
+  product screens are built in a later phase; do not mix them into backend
+  changes.
