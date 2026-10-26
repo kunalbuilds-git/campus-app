@@ -16,6 +16,7 @@
 .codex/
 .cursor/
 .opencode/
+.zcode/
 .mcp.json
 
 # Dart and Flutter generated files

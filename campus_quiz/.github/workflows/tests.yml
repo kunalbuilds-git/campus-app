@@ -48,3 +48,22 @@ jobs:
       - name: Run tests
         working-directory: campus_quiz_server
         run: dart test
+
+  app-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # The app tests run against in-memory repositories, so they need neither
+      # the server nor a database.
+      - name: Run app tests
+        working-directory: campus_quiz_flutter
+        run: flutter test
