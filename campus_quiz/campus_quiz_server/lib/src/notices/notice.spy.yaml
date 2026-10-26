@@ -1,0 +1,24 @@
+### A notice published on the campus digital notice board.
+class: Notice
+table: notice
+fields:
+  ### Headline shown on the board.
+  title: String
+
+  ### Body text of the notice.
+  body: String
+
+  ### Bucket used for the board's filters, e.g. Exams, Placement, Clubs.
+  category: String
+
+  ### Office or society that published the notice.
+  office: String
+
+  ### Time the notice was published.
+  publishedAt: DateTime, defaultModel=now
+
+  ### Pinned notices float to the top of the board.
+  pinned: bool, default=false
+indexes:
+  notice_published_idx:
+    fields: publishedAt

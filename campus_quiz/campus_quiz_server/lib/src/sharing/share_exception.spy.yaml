@@ -1,0 +1,8 @@
+### Exception reported when a share cannot be created or resolved.
+exception: ShareException
+fields:
+  ### Machine-readable error code.
+  code: String
+
+  ### Human-readable message for display in the app.
+  message: String

@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+# Least privilege: the workflows only need to read the repository. The
+# security workflow asks for more, and says so.
+permissions:
+  contents: read
+
+# A newer push to the same branch makes the older run pointless.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Server · format, analyze, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VERSION: '4.0.4'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.8'
+          cache: true
+
+      # Secrets are generated per run instead of committed: the CI database
+      # is ephemeral, so there is nothing to protect — but committing
+      # credentials (even throwaway ones) normalises the habit.
+      - name: Generate ephemeral test secrets
+        run: |
+          echo "SERVERPOD_PASSWORD_database=$(openssl rand -hex 16)" >> "$GITHUB_ENV"
+          echo "SERVERPOD_PASSWORD_redis=$(openssl rand -hex 16)" >> "$GITHUB_ENV"
+
+      - name: Cache embedded PostgreSQL binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/serverpod/pg-binaries
+          key: serverpod-pg-binaries-${{runner.os}}-${{env.VERSION}}
+
+      - name: Install dependencies
+        working-directory: campus_quiz
+        run: flutter pub get
+
+      - name: Install Serverpod CLI
+        run: |
+          dart install serverpod_cli@$VERSION
+          echo "${XDG_STATE_HOME:-$HOME/.local/state}/Dart/install/bin" >> "$GITHUB_PATH"
+
+      # The client is generated from the server's protocol definition, so a
+      # drift between the two would otherwise only show up at runtime.
+      - name: Regenerate protocol
+        working-directory: campus_quiz/campus_quiz_server
+        run: serverpod generate
+
+      - name: Check formatting
+        working-directory: campus_quiz
+        run: |
+          dart format --output=none --set-exit-if-changed \
+            campus_quiz_server/lib \
+            campus_quiz_client/lib \
+            campus_quiz_flutter/lib \
+            campus_quiz_flutter/test
+
+      - name: Analyze server
+        working-directory: campus_quiz/campus_quiz_server
+        run: dart analyze
+
+      # The embedded PostgreSQL is downloaded on the first run and then
+      # cached; the job timeout is the backstop if that download stalls.
+      - name: Test server (embedded PostgreSQL)
+        working-directory: campus_quiz/campus_quiz_server
+        run: dart test --timeout=2m
+
+  app:
+    name: App · format, analyze, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.8'
+          cache: true
+
+      - name: Install dependencies
+        working-directory: campus_quiz
+        run: flutter pub get
+
+      - name: Check formatting
+        working-directory: campus_quiz
+        run: |
+          dart format --output=none --set-exit-if-changed \
+            campus_quiz_flutter/lib \
+            campus_quiz_flutter/test
+
+      - name: Analyze app
+        working-directory: campus_quiz/campus_quiz_flutter
+        run: flutter analyze
+
+      # The whole suite, not one file: the screens smoke test, the events
+      # feed contract and the attendance editor each hold down something
+      # different.
+      - name: Test app (all suites)
+        working-directory: campus_quiz/campus_quiz_flutter
+        run: flutter test
+
+      - name: Build web (release gate)
+        working-directory: campus_quiz/campus_quiz_flutter
+        run: flutter build web --release

@@ -7,6 +7,7 @@ import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
 import 'src/events/event_seeder.dart';
+import 'src/notices/notice_seeder.dart';
 import 'src/generated/serverpod.dart';
 import 'src/web/routes/app_config_route.dart';
 import 'src/web/routes/root.dart';
@@ -112,5 +113,6 @@ void run(List<String> args) async {
   // the data.
   if (pod.runMode == ServerpodRunMode.development) {
     await EventSeeder.seedIfEmpty(pod);
+    await NoticeSeeder.seedIfEmpty(pod);
   }
 }

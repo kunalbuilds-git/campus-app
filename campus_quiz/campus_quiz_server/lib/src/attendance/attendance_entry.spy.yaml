@@ -1,0 +1,22 @@
+### One subject's attendance record for a student.
+class: AttendanceEntry
+table: attendance_entry
+fields:
+  ### The Serverpod auth user identifier of the student.
+  authUserId: String
+
+  ### Subject code, e.g. CS-201.
+  subjectCode: String
+
+  ### Subject display name.
+  subjectName: String
+
+  ### Classes attended.
+  attended: int
+
+  ### Classes held in total.
+  total: int
+indexes:
+  attendance_user_subject_idx:
+    fields: authUserId, subjectCode
+    unique: true

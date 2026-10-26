@@ -11,11 +11,17 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
+import 'package:campus_quiz_client/src/protocol/attendance/attendance_entry.dart'
+    as _i1ulllcz;
 import 'package:campus_quiz_client/src/protocol/events/event_summary.dart'
     as _id5dtabc;
 import 'package:campus_quiz_client/src/protocol/events/rsvp.dart' as _ihpaob0u;
 import 'package:campus_quiz_client/src/protocol/greetings/greeting.dart'
     as _ifozo9te;
+import 'package:campus_quiz_client/src/protocol/notices/notice.dart'
+    as _ibkk20sa;
+import 'package:campus_quiz_client/src/protocol/sharing/shared_item.dart'
+    as _ib1j35cq;
 import 'package:http/http.dart' as _i85jenna;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _iacc;
@@ -23,6 +29,43 @@ import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _iaic;
 import 'package:serverpod_client/serverpod_client.dart' as _isc;
 import 'protocol.dart' as _il2as5qe;
+
+/// The signed-in student's attendance records.
+/// {@category Endpoint}
+class EndpointAttendance extends _isc.EndpointRef {
+  EndpointAttendance(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'attendance';
+
+  /// The caller's per-subject attendance rows, newest subject first.
+  ///
+  /// Unauthenticated callers receive an empty list — the client falls back
+  /// to its bundled sample data so the section always renders.
+  _ida.Future<List<_i1ulllcz.AttendanceEntry>> myAttendance() =>
+      caller.callServerEndpoint<List<_i1ulllcz.AttendanceEntry>>(
+        'attendance',
+        'myAttendance',
+        {},
+      );
+
+  /// Upserts one subject's attendance for the signed-in student.
+  _ida.Future<_i1ulllcz.AttendanceEntry> upsert({
+    required String subjectCode,
+    required String subjectName,
+    required int attended,
+    required int total,
+  }) => caller.callServerEndpoint<_i1ulllcz.AttendanceEntry>(
+    'attendance',
+    'upsert',
+    {
+      'subjectCode': subjectCode,
+      'subjectName': subjectName,
+      'attended': attended,
+      'total': total,
+    },
+  );
+}
 
 /// By extending [AnonymousIdpBaseEndpoint], anonymous account creation is
 /// enabled, so the app can give every visitor an identity without a
@@ -365,6 +408,91 @@ class EndpointGreeting extends _isc.EndpointRef {
       );
 }
 
+/// Public API of the campus notice board.
+/// {@category Endpoint}
+class EndpointNotices extends _isc.EndpointRef {
+  EndpointNotices(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'notices';
+
+  /// Lists notices, pinned first, newest first.
+  ///
+  /// [category] filters by bucket, [pinnedOnly] keeps only pinned notices,
+  /// and [limit] is clamped to 1..100 (default 50).
+  _ida.Future<List<_ibkk20sa.Notice>> listNotices({
+    String? category,
+    bool? pinnedOnly,
+    int? limit,
+  }) => caller.callServerEndpoint<List<_ibkk20sa.Notice>>(
+    'notices',
+    'listNotices',
+    {
+      'category': category,
+      'pinnedOnly': pinnedOnly,
+      'limit': limit,
+    },
+  );
+
+  /// Publishes a notice.
+  ///
+  /// Deliberately gated: publishing to the campus board must never be an
+  /// anonymous action. Office tooling is expected to act through a signed-in
+  /// account; a role check lands with the admin surface.
+  _ida.Future<_ibkk20sa.Notice> publish({
+    required String title,
+    required String body,
+    required String category,
+    required String office,
+    bool? pinned,
+  }) => caller.callServerEndpoint<_ibkk20sa.Notice>(
+    'notices',
+    'publish',
+    {
+      'title': title,
+      'body': body,
+      'category': category,
+      'office': office,
+      'pinned': pinned,
+    },
+  );
+}
+
+/// AirDrop-style sharing: one student turns anything in the app into a
+/// six-character code, the other types or scans it.
+/// {@category Endpoint}
+class EndpointShare extends _isc.EndpointRef {
+  EndpointShare(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'share';
+
+  /// Wraps [payload] into a share and returns its code.
+  ///
+  /// [kind] is `notice` or `event`; [payload] is the item's JSON. Requires a
+  /// signed-in account (anonymous accounts count) so flooding can be traced
+  /// and capped per account.
+  _ida.Future<_ib1j35cq.SharedItem> createShare({
+    required String kind,
+    required String payload,
+  }) => caller.callServerEndpoint<_ib1j35cq.SharedItem>(
+    'share',
+    'createShare',
+    {
+      'kind': kind,
+      'payload': payload,
+    },
+  );
+
+  /// Resolves a share code to the item it carries, or null when unknown.
+  _ida.Future<_ib1j35cq.SharedItem?> resolveShare(String code) =>
+      caller.callServerEndpoint<_ib1j35cq.SharedItem?>(
+        'share',
+        'resolveShare',
+        {'code': code},
+      );
+}
+
 class Modules {
   Modules(Client client) {
     serverpod_auth_idp = _iaic.Caller(client);
@@ -403,13 +531,18 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    attendance = EndpointAttendance(this);
     anonymousIdp = EndpointAnonymousIdp(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     events = EndpointEvents(this);
     greeting = EndpointGreeting(this);
+    notices = EndpointNotices(this);
+    share = EndpointShare(this);
     modules = Modules(this);
   }
+
+  late final EndpointAttendance attendance;
 
   late final EndpointAnonymousIdp anonymousIdp;
 
@@ -421,15 +554,22 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointGreeting greeting;
 
+  late final EndpointNotices notices;
+
+  late final EndpointShare share;
+
   late final Modules modules;
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'attendance': attendance,
     'anonymousIdp': anonymousIdp,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'events': events,
     'greeting': greeting,
+    'notices': notices,
+    'share': share,
   };
 
   @override

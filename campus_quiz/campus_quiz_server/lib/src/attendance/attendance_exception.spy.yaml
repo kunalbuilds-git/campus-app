@@ -1,0 +1,8 @@
+### Exception reported when an attendance request cannot be fulfilled.
+exception: AttendanceException
+fields:
+  ### Machine-readable error code.
+  code: String
+
+  ### Human-readable message for display in the app.
+  message: String

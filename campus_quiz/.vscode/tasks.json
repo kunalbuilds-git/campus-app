@@ -9,7 +9,7 @@
       "options": {
         "cwd": "${workspaceFolder}/campus_quiz_server",
         "env": {
-          "SERVERPOD_PASSWORD_database": "mamkeUos9ODKc_9op0nIrBCl2pVeW-7H",
+          "SERVERPOD_PASSWORD_database": "<run `serverpod start`; the password lives in gitignored config/passwords.yaml>",
           // Marks a `serverpod start` launched from the IDE, which is the
           // only kind that honors the Flutter device picked in VS Code. A run
           // started from a plain terminal carries no marker, so a device file

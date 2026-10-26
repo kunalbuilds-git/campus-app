@@ -78,6 +78,72 @@ Conventions to follow:
   and is committed.
 - The seeder only inserts when the event table is empty, so restarting the
   server never changes existing data.
-- The Flutter app still contains the Serverpod starter demo screens. The
-  product screens are built in a later phase; do not mix them into backend
-  changes.
+
+## The Flutter product screens
+
+The starter demo screens are replaced. `main.dart` routes three surfaces by
+name (`/`, `/chat`, `/profile`):
+
+- `/` — Landing page. Scrolling scrubs a fixed background video frame by
+  frame while three text panels cross-fade. Panels are driven by a cue table
+  in `landing_screen.dart` (each owns `[fadeInStart, fadeInEnd, fadeOutStart,
+  fadeOutEnd]` in 0..1 page progress, with deliberate dead zones between
+  panels). Scroll input is a root `Listener` (wheel + drag + inertia), not a
+  ScrollView, so the panel CTAs stay clickable.
+- `/chat` — Event finder. Dark surface over a looping video with a glass
+  composer card whose desktop geometry is measured against a 1560x1008
+  reference frame (unit `u = min(width/1560, height/1008)`; the placeholder,
+  chip strip, model label, paperclip and send circle are absolutely placed).
+  Replies come from `lib/data/campus_assistant.dart`, a deterministic matcher
+  over the events feed.
+- `/profile` — Profile dashboard. Liquid-glass panels (`widgets/glass.dart`,
+  backdrop blur + white gradients) over `assets/images/campus_bg.jpg`, with an
+  animated weekly activity chart (`widgets/wave_chart.dart`: the stroke draws
+  first, the fill wipes in behind it).
+
+Design tokens live in `lib/theme/brand.dart`: paper `#F2F0EC`, ink `#0D0C0B`,
+ember accent `#E8632A`, and the bundled Inter / Inter Tight variable fonts in
+`assets/fonts/` (fractional weights like 410 or 520 go through
+`FontVariation('wght', …)`).
+
+`lib/data/campus_repository.dart` wraps the endpoints and degrades to the
+bundled sample data (`lib/data/campus_seed.dart`, mirroring the seeders)
+whenever the server is unreachable, so the UI can be previewed without
+`serverpod start` (`flutter run -d web-server --web-port 8085` from
+`campus_quiz_flutter`).
+
+Beyond events, the backend now carries:
+
+- `lib/src/notices/` — the `Notice` model, `notices` endpoint (pinned-first
+  listing + publish) and the development `NoticeSeeder`.
+- `lib/src/attendance/` — `AttendanceEntry` per student (auth user + subject
+  unique), `attendance` endpoint (`myAttendance`, `upsert`).
+- `lib/src/sharing/` — `SharedItem` + `share` endpoint: `createShare`
+  allocates a six-character code (AirDrop-style sharing between students),
+  `resolveShare` looks it up. Payloads are JSON (`notice` or `event`).
+
+The app has two behaviour layers on top:
+
+- **Share sheet** (`widgets/share_sheet.dart`) — QR + six-character code per
+  notice, and a type-a-code importer on the notice board.
+- **Personalisation engine** (`lib/data/behavior_engine.dart`) — a small
+  on-device behavioural model (decayed category affinity, section frequency,
+  hour histogram) persisted with shared_preferences. It drives the "For you"
+  card on My board and the insight line in the guide's opening state. Note
+  widget tests must mock `SharedPreferences` (or rely on the engine's
+  try/catch fallbacks).
+
+`assets/config.json` currently points at the host's LAN address
+(`http://192.168.1.13:8080`) so a phone on the same Wi-Fi reaches the dev
+server; `flutter build apk --release` produces an installable APK. The
+embedded-Postgres test database (`dart test` in the server package) needs a
+working download of the native binary — if the runner dies silently during
+"loading", check that download first. Smoke tests for the three screens live in
+`campus_quiz_flutter/test/screens_smoke_test.dart` and load the bundled fonts
+first — widget tests otherwise render the Ahem font (one em per glyph), which
+breaks every text-dependent layout assertion.
+
+Layout gotchas learned here: never combine `BorderRadius` with a non-uniform
+`Border` (the paint-time assert silently drops the rest of the decoration);
+`Container(alignment:)` inside an unbounded Row expands to the max width —
+use `Row(mainAxisSize: min)` for pill shapes.

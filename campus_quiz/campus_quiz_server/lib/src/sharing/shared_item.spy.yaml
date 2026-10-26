@@ -1,0 +1,22 @@
+### An item one student shared with another through a short code.
+class: SharedItem
+table: shared_item
+fields:
+  ### The six-character share code students type or scan.
+  code: String
+
+  ### What is being shared: `notice` or `event`.
+  kind: String
+
+  ### JSON payload of the shared item.
+  payload: String
+
+  ### The auth user that created the share, for flood control.
+  createdBy: String
+
+  ### Time the share was created.
+  createdAt: DateTime, defaultModel=now
+indexes:
+  shared_item_code_idx:
+    fields: code
+    unique: true

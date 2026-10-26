@@ -13,11 +13,17 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _ida;
 import 'dart:io' as _idi;
+import 'package:campus_quiz_server/src/generated/attendance/attendance_entry.dart'
+    as _ikgpg33u;
 import 'package:campus_quiz_server/src/generated/events/event_summary.dart'
     as _iew5lf5r;
 import 'package:campus_quiz_server/src/generated/events/rsvp.dart' as _iiw3sxrr;
 import 'package:campus_quiz_server/src/generated/greetings/greeting.dart'
     as _i3j5j00t;
+import 'package:campus_quiz_server/src/generated/notices/notice.dart'
+    as _isp6ye14;
+import 'package:campus_quiz_server/src/generated/sharing/shared_item.dart'
+    as _ilx9gw1d;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
@@ -155,6 +161,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _AttendanceEndpoint attendance;
+
   late final _AnonymousIdpEndpoint anonymousIdp;
 
   late final _EmailIdpEndpoint emailIdp;
@@ -164,6 +172,10 @@ class TestEndpoints {
   late final _EventsEndpoint events;
 
   late final _GreetingEndpoint greeting;
+
+  late final _NoticesEndpoint notices;
+
+  late final _ShareEndpoint share;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -173,6 +185,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.SerializationManager serializationManager,
     _is.EndpointDispatch endpoints,
   ) {
+    attendance = _AttendanceEndpoint(
+      endpoints,
+      serializationManager,
+    );
     anonymousIdp = _AnonymousIdpEndpoint(
       endpoints,
       serializationManager,
@@ -193,6 +209,94 @@ class _InternalTestEndpoints extends TestEndpoints
       endpoints,
       serializationManager,
     );
+    notices = _NoticesEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    share = _ShareEndpoint(
+      endpoints,
+      serializationManager,
+    );
+  }
+}
+
+class _AttendanceEndpoint {
+  _AttendanceEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<List<_ikgpg33u.AttendanceEntry>> myAttendance(
+    _ist.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'attendance',
+            method: 'myAttendance',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'attendance',
+          methodName: 'myAttendance',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_ikgpg33u.AttendanceEntry>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ikgpg33u.AttendanceEntry> upsert(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required String subjectCode,
+    required String subjectName,
+    required int attended,
+    required int total,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'attendance',
+            method: 'upsert',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'attendance',
+          methodName: 'upsert',
+          parameters: _ist.testObjectToJson({
+            'subjectCode': subjectCode,
+            'subjectName': subjectName,
+            'attended': attended,
+            'total': total,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ikgpg33u.AttendanceEntry>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 
@@ -765,6 +869,172 @@ class _GreetingEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<_i3j5j00t.Greeting>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _NoticesEndpoint {
+  _NoticesEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<List<_isp6ye14.Notice>> listNotices(
+    _ist.TestSessionBuilder sessionBuilder, {
+    String? category,
+    bool? pinnedOnly,
+    int? limit,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notices',
+            method: 'listNotices',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notices',
+          methodName: 'listNotices',
+          parameters: _ist.testObjectToJson({
+            'category': category,
+            'pinnedOnly': pinnedOnly,
+            'limit': limit,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<List<_isp6ye14.Notice>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_isp6ye14.Notice> publish(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required String title,
+    required String body,
+    required String category,
+    required String office,
+    bool? pinned,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notices',
+            method: 'publish',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notices',
+          methodName: 'publish',
+          parameters: _ist.testObjectToJson({
+            'title': title,
+            'body': body,
+            'category': category,
+            'office': office,
+            'pinned': pinned,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_isp6ye14.Notice>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _ShareEndpoint {
+  _ShareEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<_ilx9gw1d.SharedItem> createShare(
+    _ist.TestSessionBuilder sessionBuilder, {
+    required String kind,
+    required String payload,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'share',
+            method: 'createShare',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'share',
+          methodName: 'createShare',
+          parameters: _ist.testObjectToJson({
+            'kind': kind,
+            'payload': payload,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilx9gw1d.SharedItem>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_ilx9gw1d.SharedItem?> resolveShare(
+    _ist.TestSessionBuilder sessionBuilder,
+    String code,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'share',
+            method: 'resolveShare',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'share',
+          methodName: 'resolveShare',
+          parameters: _ist.testObjectToJson({'code': code}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_ilx9gw1d.SharedItem?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

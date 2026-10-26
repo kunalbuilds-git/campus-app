@@ -43,7 +43,51 @@ abstract final class EventSeeder {
       );
     }
 
+    /// A time later today, rounded up to the next half hour.
+    DateTime laterToday(double hours) {
+      final raw = now.add(Duration(minutes: (hours * 60).round()));
+      final rounded = raw.minute <= 30 ? 30 : 60;
+      return DateTime(raw.year, raw.month, raw.day, raw.hour, rounded);
+    }
+
+    /// Keeps a same-day event on today, inside a sensible evening window:
+    /// anything later than nine o'clock is pulled back to nine, and once nine
+    /// has passed the event slips to tomorrow morning rather than landing at
+    /// two in the morning.
+    DateTime sameDay(DateTime when, int fallbackHour) {
+      if (when.day != now.day) return at(1, fallbackHour);
+      final limit = DateTime(now.year, now.month, now.day, 21);
+      if (when.isAfter(limit)) {
+        return limit.isAfter(now) ? limit : at(1, fallbackHour);
+      }
+      return when;
+    }
+
     return [
+      Event(
+        title: 'Design Studio Open Hours',
+        description:
+            'The design block opens its doors for anyone who wants to print, '
+            'draw or prototype. Supervisors are around to help.',
+        startsAt: sameDay(laterToday(2), 10),
+        endsAt: sameDay(laterToday(3), 11),
+        location: 'Studio 2, Design Block',
+        organizer: 'Design Collective',
+        capacity: 40,
+        category: EventCategory.workshop,
+      ),
+      Event(
+        title: 'Fireside Chat: Your First App',
+        description:
+            'Two alumni talk about what they shipped first, the mistakes that '
+            'cost them, and what they would build again.',
+        startsAt: sameDay(laterToday(5), 16),
+        endsAt: sameDay(laterToday(6), 17),
+        location: 'Cafeteria Lawn',
+        organizer: 'Entrepreneurship Cell',
+        capacity: 120,
+        category: EventCategory.tech,
+      ),
       Event(
         title: 'Campus Hackathon 2026',
         description:
@@ -93,6 +137,18 @@ abstract final class EventSeeder {
         category: EventCategory.cultural,
       ),
       Event(
+        title: 'Blood Donation Drive',
+        description:
+            'The college health unit is hosting a donation camp with the city '
+            'blood bank. Donors get a certificate and a full breakfast.',
+        startsAt: at(7, 10),
+        endsAt: at(7, 14),
+        location: 'Health Centre, Block C',
+        organizer: 'NSS Unit',
+        capacity: 70,
+        category: EventCategory.community,
+      ),
+      Event(
         title: 'Undergraduate Research Symposium',
         description:
             'Final-year and masters students present their research posters '
@@ -129,6 +185,41 @@ abstract final class EventSeeder {
         category: EventCategory.sports,
       ),
       Event(
+        title: 'Breakfast Run and Coffee',
+        description:
+            'A five-kilometre loop around the campus track, finishing with '
+            'filter coffee at the canteen. All paces welcome.',
+        startsAt: at(1, 7, 30),
+        endsAt: at(1, 8, 30),
+        location: 'Track, Behind Block D',
+        organizer: 'Athletics Club',
+        category: EventCategory.sports,
+      ),
+      Event(
+        title: 'Library Study Sprint',
+        description:
+            'Three focused hours in the reading room with the lights low and '
+            'phones away. Everyone works on their own thing.',
+        startsAt: at(2, 13),
+        endsAt: at(2, 16),
+        location: 'Central Library, Floor 2',
+        organizer: 'Library Committee',
+        capacity: 80,
+        category: EventCategory.academic,
+      ),
+      Event(
+        title: 'Robotics Lab Open House',
+        description:
+            'The robotics lab opens its workbenches: line-following bots, a '
+            'drone you can fly, and the students who built them.',
+        startsAt: at(3, 11),
+        endsAt: at(3, 13),
+        location: 'Robotics Lab, Block E',
+        organizer: 'Robotics Society',
+        capacity: 50,
+        category: EventCategory.tech,
+      ),
+      Event(
         title: 'Photography Walk: Old Town',
         description:
             'A guided walk through the old town for anyone interested in '
@@ -138,6 +229,42 @@ abstract final class EventSeeder {
         location: 'Meet at the Main Gate',
         organizer: 'Photography Club',
         category: EventCategory.community,
+      ),
+      Event(
+        title: 'Football Trials — Open Selection',
+        description:
+            'Open trials for the university side. Bring boots and a dark top; '
+            'the coaches will take anyone who turns up.',
+        startsAt: at(4, 16),
+        endsAt: at(4, 18),
+        location: 'University Stadium',
+        organizer: 'Sports Council',
+        capacity: 60,
+        category: EventCategory.sports,
+      ),
+      Event(
+        title: 'General Aptitude Quiz',
+        description:
+            'A timed departmental quiz on quant, reasoning and reading. First '
+            'year scores go on the notice board on Friday.',
+        startsAt: at(5, 13),
+        endsAt: at(5, 15),
+        location: 'Exam Hall 2',
+        organizer: 'Academic Committee',
+        capacity: 150,
+        category: EventCategory.academic,
+      ),
+      Event(
+        title: 'Short Film Screening',
+        description:
+            'Eight student-made short films, one of them a winner at the '
+            'regional festival. Introductions by the directors.',
+        startsAt: at(6, 19),
+        endsAt: at(6, 21),
+        location: 'Auditorium, Block A',
+        organizer: 'Film Society',
+        capacity: 180,
+        category: EventCategory.cultural,
       ),
       Event(
         title: 'Placement Preparation Seminar',

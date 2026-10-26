@@ -11,15 +11,21 @@
 // ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:campus_quiz_server/src/generated/attendance/attendance_entry.dart'
+    as _ikgpg33u;
 import 'package:campus_quiz_server/src/generated/events/event_summary.dart'
     as _iew5lf5r;
 import 'package:campus_quiz_server/src/generated/events/rsvp.dart' as _iiw3sxrr;
+import 'package:campus_quiz_server/src/generated/notices/notice.dart'
+    as _isp6ye14;
 import 'package:serverpod/protocol.dart' as _isp;
 import 'package:serverpod/serverpod.dart' as _is;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import 'attendance/attendance_entry.dart' as _i6cjsyrg;
+import 'attendance/attendance_exception.dart' as _ist1gidr;
 import 'events/event.dart' as _iq09ghc5;
 import 'events/event_category.dart' as _in056s28;
 import 'events/event_exception.dart' as _ikkdwwzc;
@@ -27,6 +33,12 @@ import 'events/event_summary.dart' as _i41vm8xm;
 import 'events/rsvp.dart' as _ibgfe0cw;
 import 'events/rsvp_status.dart' as _i8nmnugq;
 import 'greetings/greeting.dart' as _izw8z7ou;
+import 'notices/notice.dart' as _is7ha23q;
+import 'notices/notice_exception.dart' as _ixtz6m9s;
+import 'sharing/share_exception.dart' as _ifmgnpzw;
+import 'sharing/shared_item.dart' as _iyajaqhn;
+export 'attendance/attendance_entry.dart';
+export 'attendance/attendance_exception.dart';
 export 'events/event.dart';
 export 'events/event_category.dart';
 export 'events/event_exception.dart';
@@ -34,6 +46,10 @@ export 'events/event_summary.dart';
 export 'events/rsvp.dart';
 export 'events/rsvp_status.dart';
 export 'greetings/greeting.dart';
+export 'notices/notice.dart';
+export 'notices/notice_exception.dart';
+export 'sharing/share_exception.dart';
+export 'sharing/shared_item.dart';
 
 class Protocol extends _is.DatabaseSerializationManager {
   Protocol._();
@@ -43,6 +59,72 @@ class Protocol extends _is.DatabaseSerializationManager {
   static final Protocol _instance = Protocol._().._registerHostProtocols();
 
   static List<_isp.TableDefinition> get targetTableDefinitions => [
+    _isp.TableDefinition(
+      name: 'attendance_entry',
+      dartName: 'AttendanceEntry',
+      schema: 'public',
+      module: 'campus_quiz',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'subjectCode',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'subjectName',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'attended',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'total',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'attendance_user_subject_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'subjectCode',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     _isp.TableDefinition(
       name: 'event',
       dartName: 'Event',
@@ -120,6 +202,75 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'startsAt',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
+      name: 'notice',
+      dartName: 'Notice',
+      schema: 'public',
+      module: 'campus_quiz',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'title',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'body',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'category',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'office',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'publishedAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _isp.ColumnDefinition(
+          name: 'pinned',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'notice_published_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'publishedAt',
             ),
           ],
           type: 'btree',
@@ -213,6 +364,68 @@ class Protocol extends _is.DatabaseSerializationManager {
       ],
       managed: true,
     ),
+    _isp.TableDefinition(
+      name: 'shared_item',
+      dartName: 'SharedItem',
+      schema: 'public',
+      module: 'campus_quiz',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'code',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'kind',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'payload',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdBy',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'shared_item_code_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'code',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     ..._iais.Protocol.targetTableDefinitions,
     ..._iacs.Protocol.targetTableDefinitions,
     ..._isp.Protocol.targetTableDefinitions,
@@ -245,6 +458,12 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
 
+    if (t == _i6cjsyrg.AttendanceEntry) {
+      return _i6cjsyrg.AttendanceEntry.fromJson(data) as T;
+    }
+    if (t == _ist1gidr.AttendanceException) {
+      return _ist1gidr.AttendanceException.fromJson(data) as T;
+    }
     if (t == _iq09ghc5.Event) {
       return _iq09ghc5.Event.fromJson(data) as T;
     }
@@ -265,6 +484,28 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _izw8z7ou.Greeting) {
       return _izw8z7ou.Greeting.fromJson(data) as T;
+    }
+    if (t == _is7ha23q.Notice) {
+      return _is7ha23q.Notice.fromJson(data) as T;
+    }
+    if (t == _ixtz6m9s.NoticeException) {
+      return _ixtz6m9s.NoticeException.fromJson(data) as T;
+    }
+    if (t == _ifmgnpzw.ShareException) {
+      return _ifmgnpzw.ShareException.fromJson(data) as T;
+    }
+    if (t == _iyajaqhn.SharedItem) {
+      return _iyajaqhn.SharedItem.fromJson(data) as T;
+    }
+    if (t == _is.getType<_i6cjsyrg.AttendanceEntry?>()) {
+      return (data != null ? _i6cjsyrg.AttendanceEntry.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ist1gidr.AttendanceException?>()) {
+      return (data != null
+              ? _ist1gidr.AttendanceException.fromJson(data)
+              : null)
+          as T;
     }
     if (t == _is.getType<_iq09ghc5.Event?>()) {
       return (data != null ? _iq09ghc5.Event.fromJson(data) : null) as T;
@@ -289,6 +530,26 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _is.getType<_izw8z7ou.Greeting?>()) {
       return (data != null ? _izw8z7ou.Greeting.fromJson(data) : null) as T;
     }
+    if (t == _is.getType<_is7ha23q.Notice?>()) {
+      return (data != null ? _is7ha23q.Notice.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ixtz6m9s.NoticeException?>()) {
+      return (data != null ? _ixtz6m9s.NoticeException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_ifmgnpzw.ShareException?>()) {
+      return (data != null ? _ifmgnpzw.ShareException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _is.getType<_iyajaqhn.SharedItem?>()) {
+      return (data != null ? _iyajaqhn.SharedItem.fromJson(data) : null) as T;
+    }
+    if (t == List<_ikgpg33u.AttendanceEntry>) {
+      return (data as List)
+              .map((e) => deserialize<_ikgpg33u.AttendanceEntry>(e))
+              .toList()
+          as T;
+    }
     if (t == List<_iew5lf5r.EventSummary>) {
       return (data as List)
               .map((e) => deserialize<_iew5lf5r.EventSummary>(e))
@@ -297,6 +558,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == List<_iiw3sxrr.Rsvp>) {
       return (data as List).map((e) => deserialize<_iiw3sxrr.Rsvp>(e)).toList()
+          as T;
+    }
+    if (t == List<_isp6ye14.Notice>) {
+      return (data as List)
+              .map((e) => deserialize<_isp6ye14.Notice>(e))
+              .toList()
           as T;
     }
     try {
@@ -313,6 +580,8 @@ class Protocol extends _is.DatabaseSerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
+      _i6cjsyrg.AttendanceEntry => 'AttendanceEntry',
+      _ist1gidr.AttendanceException => 'AttendanceException',
       _iq09ghc5.Event => 'Event',
       _in056s28.EventCategory => 'EventCategory',
       _ikkdwwzc.EventException => 'EventException',
@@ -320,6 +589,10 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ibgfe0cw.Rsvp => 'Rsvp',
       _i8nmnugq.RsvpStatus => 'RsvpStatus',
       _izw8z7ou.Greeting => 'Greeting',
+      _is7ha23q.Notice => 'Notice',
+      _ixtz6m9s.NoticeException => 'NoticeException',
+      _ifmgnpzw.ShareException => 'ShareException',
+      _iyajaqhn.SharedItem => 'SharedItem',
       _ => null,
     };
   }
@@ -334,6 +607,10 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
 
     switch (data) {
+      case _i6cjsyrg.AttendanceEntry():
+        return 'AttendanceEntry';
+      case _ist1gidr.AttendanceException():
+        return 'AttendanceException';
       case _iq09ghc5.Event():
         return 'Event';
       case _in056s28.EventCategory():
@@ -348,6 +625,14 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'RsvpStatus';
       case _izw8z7ou.Greeting():
         return 'Greeting';
+      case _is7ha23q.Notice():
+        return 'Notice';
+      case _ixtz6m9s.NoticeException():
+        return 'NoticeException';
+      case _ifmgnpzw.ShareException():
+        return 'ShareException';
+      case _iyajaqhn.SharedItem():
+        return 'SharedItem';
     }
     className = _iais.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -374,6 +659,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'AttendanceEntry') {
+      return deserialize<_i6cjsyrg.AttendanceEntry>(data['data']);
+    }
+    if (dataClassName == 'AttendanceException') {
+      return deserialize<_ist1gidr.AttendanceException>(data['data']);
+    }
     if (dataClassName == 'Event') {
       return deserialize<_iq09ghc5.Event>(data['data']);
     }
@@ -394,6 +685,18 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (dataClassName == 'Greeting') {
       return deserialize<_izw8z7ou.Greeting>(data['data']);
+    }
+    if (dataClassName == 'Notice') {
+      return deserialize<_is7ha23q.Notice>(data['data']);
+    }
+    if (dataClassName == 'NoticeException') {
+      return deserialize<_ixtz6m9s.NoticeException>(data['data']);
+    }
+    if (dataClassName == 'ShareException') {
+      return deserialize<_ifmgnpzw.ShareException>(data['data']);
+    }
+    if (dataClassName == 'SharedItem') {
+      return deserialize<_iyajaqhn.SharedItem>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
@@ -436,10 +739,16 @@ class Protocol extends _is.DatabaseSerializationManager {
       }
     }
     switch (t) {
+      case _i6cjsyrg.AttendanceEntry:
+        return _i6cjsyrg.AttendanceEntry.t;
       case _iq09ghc5.Event:
         return _iq09ghc5.Event.t;
       case _ibgfe0cw.Rsvp:
         return _ibgfe0cw.Rsvp.t;
+      case _is7ha23q.Notice:
+        return _is7ha23q.Notice.t;
+      case _iyajaqhn.SharedItem:
+        return _iyajaqhn.SharedItem.t;
     }
     return null;
   }

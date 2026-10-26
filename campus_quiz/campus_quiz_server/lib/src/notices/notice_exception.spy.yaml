@@ -1,0 +1,8 @@
+### Exception reported when a notice action is not allowed.
+exception: NoticeException
+fields:
+  ### Machine-readable error code.
+  code: String
+
+  ### Human-readable message for display in the app.
+  message: String

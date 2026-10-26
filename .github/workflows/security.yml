@@ -1,0 +1,85 @@
+name: Security Scan
+
+# Strix (https://github.com/usestrix/strix) runs autonomous pentest agents
+# against the changed code on every PR, and a full scan weekly. Findings are
+# validated with a working proof-of-concept before they are reported.
+#
+# The scan needs an LLM key (STRIX_LLM or LLM_API_KEY). Without one the job
+# skips with a clear notice instead of failing red — a missing secret is not
+# a finding, and a fork pull request can never see the repository's secrets.
+
+on:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 1' # weekly, Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write # to upload SARIF to code scanning
+  actions: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  strix-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # required for diff-scope resolution
+
+      - name: Check for scan credentials
+        id: credentials
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ -n "$STRIX_LLM" ] || [ -n "$LLM_API_KEY" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Explain the skipped scan
+        if: steps.credentials.outputs.available != 'true'
+        run: |
+          echo "::notice title=Security scan skipped::Strix needs an LLM key. \
+          Add the STRIX_LLM or LLM_API_KEY repository secret to turn the scan on."
+
+      - name: Install Strix
+        if: steps.credentials.outputs.available == 'true'
+        run: curl -sSL https://strix.ai/install | bash
+
+      - name: Run Security Scan (diff-scoped on PRs, full on schedule)
+        if: steps.credentials.outputs.available == 'true'
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            strix -n -t ./ --scan-mode quick --max-budget 10
+          else
+            strix -n -t ./ --scan-mode standard --max-budget 25
+          fi
+
+      # A hard budget stop exits 0 but leaves run.json status "stopped" —
+      # fail loudly instead of passing an incomplete scan.
+      - name: Fail unless the scan completed
+        if: steps.credentials.outputs.available == 'true'
+        run: |
+          run_json=$(ls -t strix_runs/*/run.json | head -1)
+          status=$(jq -r .status "$run_json")
+          if [ "$status" != "completed" ]; then
+            echo "Strix run status is '$status' — the scan did not complete. Raise --max-budget." >&2
+            exit 1
+          fi
+
+      - name: Upload findings to GitHub code scanning
+        if: steps.credentials.outputs.available == 'true' && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: strix_runs

@@ -29,11 +29,17 @@ dependencies:
   cupertino_icons: ^1.0.5
   flutter:
     sdk: flutter
-  google_fonts: ^8.1.0
+  video_player: ^2.9.2
   campus_quiz_client:
     path: ../campus_quiz_client
   serverpod_flutter: 4.0.4
   serverpod_auth_idp_flutter: 4.0.4
+  http: ^1.2.2
+  flutter_animate: ^4.5.2
+  qr_flutter: ^4.1.0
+  shared_preferences: ^2.3.2
+  cryptography: ^2.7.0
+  flutter_secure_storage: ^10.0.0
 
 dev_dependencies:
   # Used for agents to drive the app through the Dart MCP
@@ -57,6 +63,15 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+    - family: Inter Tight
+      fonts:
+        - asset: assets/fonts/InterTight-Variable.ttf
+
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
@@ -69,6 +84,7 @@ flutter:
   # https://flutter.dev/assets-and-images/#from-packages
   assets:
     - assets/config.json
+    - assets/images/campus_bg.jpg
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

@@ -35,7 +35,7 @@
     image: redis:6.2.6
     ports:
       - "9091:6379"
-    command: redis-server --requirepass "SH7wsNNUzncKhBlIdve3LmhHNGIZPitS"
+    command: redis-server --requirepass "${SERVERPOD_PASSWORD_redis:?set SERVERPOD_PASSWORD_redis}"
     environment:
       - REDIS_REPLICATION_MODE=master
 
