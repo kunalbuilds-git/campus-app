@@ -78,6 +78,27 @@ Conventions to follow:
   and is committed.
 - The seeder only inserts when the event table is empty, so restarting the
   server never changes existing data.
-- The Flutter app still contains the Serverpod starter demo screens. The
-  product screens are built in a later phase; do not mix them into backend
-  changes.
+
+Frontend layout:
+
+- `campus_quiz_flutter/lib/screens/` — `auth_gate` (signs the student in as a
+  guest), `events_home_screen` (the feed with the category filter and the
+  student's responses), `event_detail_screen` (the details and the response
+  buttons), `account_screen` and `email_auth_screen` (the email account).
+- `campus_quiz_flutter/lib/data/` — the `EventsRepository` and
+  `AccountRepository` interfaces with their Serverpod implementations.
+- `campus_quiz_flutter/lib/widgets/` and `lib/utils/` — the event card and the
+  formatting helpers.
+
+Frontend conventions to follow:
+
+- The screens never call the Serverpod client directly; they use the
+  repositories in `lib/data/`. That keeps the screens testable without a
+  running server, and the widget tests in `campus_quiz_flutter/test/` use the
+  in-memory fakes in `test/support/fakes.dart`.
+- The client restores the stored session before the first screen runs
+  (`await client.auth.initialize()` in `lib/client.dart`). Keep it that way:
+  without it the app creates a new anonymous account on every cold start and
+  the student's responses are left behind.
+- The guest responses are moved to the email account by the account screen
+  after a sign-in, because the server gives every identity its own rows.

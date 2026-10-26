@@ -13,19 +13,25 @@ The repository is a Dart pub workspace with three packages:
 
 ## Current state
 
-The backend foundation for the campus events feature is implemented. The
-Flutter app still contains the Serverpod starter demo screens (a greeting
-demo and a sign-in demo); the product screens are not built yet.
+The campus events app is implemented end to end: the Serverpod backend and the
+Flutter product screens that use it.
 
-Backend functionality that exists today:
+What the app does today:
 
 - **Events feed** — browse events with start time, location, organizer,
-  category and capacity, plus live RSVP counts.
+  category and capacity, plus live RSVP counts. The home screen has a category
+  filter and a second tab with the events the student responded to.
+- **Event details** — open an event for the full description and respond as
+  `going` or `interested`, or cancel the response. Events that have ended are
+  marked and cannot be responded to.
 - **RSVPs** — signed-in users can mark themselves as `going` or `interested`,
   change their status, and cancel. One RSVP per user and event, enforced by a
   unique index.
 - **Authentication** — anonymous accounts (one tap, no registration) and
-  email/password accounts. Either kind of account can RSVP.
+  email/password accounts. Either kind of account can RSVP. A visitor can
+  create an email account from the account screen; the responses they made as
+  a guest are moved to that account, so they follow the student to another
+  device.
 - **Seeded content** — the development database is filled with sample events on
   the first server start, so the app always has content to show.
 
@@ -153,6 +159,20 @@ flutter run -d chrome --dart-define=SERVER_URL=http://localhost:8080
 
 On a physical device, replace `localhost` with the LAN IP of your machine.
 
+The app is made up of these screens:
+
+| Screen              | What it does                                                        |
+| ------------------- | ------------------------------------------------------------------- |
+| `auth_gate`         | Signs the student in as a guest, or restores the stored session.     |
+| `events_home_screen`| Upcoming events with a category filter, and the student's responses.|
+| `event_detail_screen`| The full event details and the going/interested response buttons.  |
+| `account_screen`    | Creates an email account, signs in, or signs out.                   |
+
+The screens read their data through the `EventsRepository` and
+`AccountRepository` interfaces in `lib/data/`, which the Serverpod client
+implements. The screens depend on the interfaces instead of the client, so
+they can be tested without a running server.
+
 ## API overview
 
 All endpoints live in the `events` endpoint (`client.events.*` on the client
@@ -223,13 +243,27 @@ them.
 
 ## Tests
 
+The backend tests:
+
 ```sh
 cd campus_quiz/campus_quiz_server
 dart test
 ```
 
-The tests start their own embedded PostgreSQL instance, so no Docker and no
-running server is needed. The same commands the CI runs are:
+They start their own embedded PostgreSQL instance, so no Docker and no
+running server is needed.
+
+The app tests:
+
+```sh
+cd campus_quiz/campus_quiz_flutter
+flutter test
+```
+
+They run against in-memory repositories, so they need neither the server nor a
+database.
+
+The same commands the CI runs are:
 
 ```sh
 dart analyze --fatal-infos
