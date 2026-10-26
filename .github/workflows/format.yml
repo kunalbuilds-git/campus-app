@@ -1,0 +1,35 @@
+name: Format
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Lets the auto merge workflow run this check on a feature branch.
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+
+      - name: Install dependencies
+        working-directory: campus_quiz
+        run: flutter pub get
+
+      - name: Check the server formatting
+        working-directory: campus_quiz/campus_quiz_server
+        run: dart format --set-exit-if-changed .
+
+      - name: Check the app formatting
+        working-directory: campus_quiz/campus_quiz_flutter
+        run: dart format --set-exit-if-changed .

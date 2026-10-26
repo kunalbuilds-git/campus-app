@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Lets the auto merge workflow run this check on a feature branch.
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   analyze:
@@ -18,8 +23,13 @@ jobs:
           flutter-version: '3.44.4'
 
       - name: Install dependencies
+        working-directory: campus_quiz
         run: flutter pub get
 
-      - name: Analyze
-        working-directory: campus_quiz_server
+      - name: Analyze the server
+        working-directory: campus_quiz/campus_quiz_server
         run: dart analyze --fatal-infos
+
+      - name: Analyze the app
+        working-directory: campus_quiz/campus_quiz_flutter
+        run: flutter analyze
