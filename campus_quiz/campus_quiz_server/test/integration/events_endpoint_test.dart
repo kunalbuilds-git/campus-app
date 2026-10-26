@@ -399,6 +399,138 @@ void main() {
           completes,
         );
       });
+
+      test('when the event does not exist then rsvping is rejected', () async {
+        final missingId = Uuid().v4obj();
+
+        expect(
+          () => endpoints.events.rsvp(
+            signedInAs('user-1'),
+            missingId,
+            status: 'going',
+          ),
+          throwsA(
+            isA<EventException>().having(
+              (e) => e.code,
+              'code',
+              'EVENT_NOT_FOUND',
+            ),
+          ),
+        );
+      });
+
+      test('when the event does not exist then cancelling does not fail',
+          () async {
+        final missingId = Uuid().v4obj();
+
+        await expectLater(
+          endpoints.events.cancelRsvp(signedInAs('user-1'), missingId),
+          completes,
+        );
+      });
+
+      test('when a user cancels another user\'s RSVP then it is kept',
+          () async {
+        final event = await insertEvent(title: 'Opening ceremony');
+
+        await endpoints.events.rsvp(
+          signedInAs('user-1'),
+          event.id!,
+          status: 'going',
+        );
+
+        // The identity comes from the session, so this call can only ever
+        // reach the RSVP of the user that made it.
+        await endpoints.events.cancelRsvp(signedInAs('user-2'), event.id!);
+
+        final rsvps = await endpoints.events.myRsvps(signedInAs('user-1'));
+        expect(rsvps, hasLength(1));
+        expect(rsvps.single.status, RsvpStatus.going);
+
+        final summary = await endpoints.events.getEvent(
+          sessionBuilder,
+          event.id!,
+        );
+        expect(summary.goingCount, 1);
+      });
+
+      test('when the last seat is taken then the next rsvp is rejected',
+          () async {
+        final event = await insertEvent(title: 'Small workshop', capacity: 2);
+
+        await endpoints.events.rsvp(
+          signedInAs('user-1'),
+          event.id!,
+          status: 'going',
+        );
+        await endpoints.events.rsvp(
+          signedInAs('user-2'),
+          event.id!,
+          status: 'going',
+        );
+
+        await expectLater(
+          endpoints.events.rsvp(
+            signedInAs('user-3'),
+            event.id!,
+            status: 'going',
+          ),
+          throwsA(
+            isA<EventException>().having(
+              (e) => e.code,
+              'code',
+              'EVENT_CAPACITY_REACHED',
+            ),
+          ),
+        );
+
+        final summary = await endpoints.events.getEvent(
+          sessionBuilder,
+          event.id!,
+        );
+        expect(summary.goingCount, 2);
+      });
+
+      test('when a user cancels then their seat can be given to someone else',
+          () async {
+        final event = await insertEvent(title: 'Small workshop', capacity: 1);
+
+        await endpoints.events.rsvp(
+          signedInAs('user-1'),
+          event.id!,
+          status: 'going',
+        );
+
+        await expectLater(
+          endpoints.events.rsvp(
+            signedInAs('user-2'),
+            event.id!,
+            status: 'going',
+          ),
+          throwsA(
+            isA<EventException>().having(
+              (e) => e.code,
+              'code',
+              'EVENT_CAPACITY_REACHED',
+            ),
+          ),
+        );
+
+        await endpoints.events.cancelRsvp(signedInAs('user-1'), event.id!);
+
+        final rsvp = await endpoints.events.rsvp(
+          signedInAs('user-2'),
+          event.id!,
+          status: 'going',
+        );
+        expect(rsvp.status, RsvpStatus.going);
+
+        final summary = await endpoints.events.getEvent(
+          sessionBuilder,
+          event.id!,
+        );
+        expect(summary.goingCount, 1);
+      });
     });
 
     group('listing my rsvps', () {

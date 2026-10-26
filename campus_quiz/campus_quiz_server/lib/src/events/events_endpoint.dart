@@ -77,6 +77,14 @@ class EventsEndpoint extends Endpoint {
   ///
   /// Passing a different [status] updates the existing RSVP, so calling
   /// this twice is safe. The status defaults to `going`.
+  ///
+  /// The whole operation runs in one transaction that holds a row lock on the
+  /// event. The lock is what makes the capacity check correct: without it,
+  /// two requests can both count the same free seat and both write an RSVP,
+  /// so the event ends up with more attendees than its capacity allows.
+  /// Holding the lock until the transaction ends also means a repeated
+  /// request from the same user sees the RSVP written by the first one
+  /// instead of colliding with it on the unique index.
   Future<Rsvp> rsvp(
     Session session,
     UuidValue eventId, {
@@ -85,68 +93,91 @@ class EventsEndpoint extends Endpoint {
     final authUserId = _requireAuth(session);
     final rsvpStatus = _parseStatus(status ?? 'going');
 
-    final event = await Event.db.findById(session, eventId);
-    if (event == null) {
-      throw EventException(
-        code: 'EVENT_NOT_FOUND',
-        message: 'No event with id $eventId.',
-      );
-    }
-    final endsAt = event.endsAt;
-    if (endsAt != null && endsAt.isBefore(DateTime.now())) {
-      throw EventException(
-        code: 'EVENT_ENDED',
-        message: 'The event "${event.title}" has already ended.',
-      );
-    }
-
-    final existing = await _findRsvp(session, eventId, authUserId);
-
-    // Users who are already counted as going can keep their spot even when
-    // the event is full; only new or switching attendees hit the cap.
-    if (rsvpStatus == RsvpStatus.going &&
-        existing?.status != RsvpStatus.going) {
-      final capacity = event.capacity;
-      if (capacity != null) {
-        final goingCount = await Rsvp.db.count(
-          session,
-          where: (t) =>
-              t.eventId.equals(eventId) & t.status.equals(RsvpStatus.going),
+    return session.db.transaction((transaction) async {
+      final event = await _lockEvent(session, eventId, transaction);
+      if (event == null) {
+        throw EventException(
+          code: 'EVENT_NOT_FOUND',
+          message: 'No event with id $eventId.',
         );
-        if (goingCount >= capacity) {
-          throw EventException(
-            code: 'EVENT_CAPACITY_REACHED',
-            message:
-                'The event "${event.title}" has reached its capacity of '
-                '$capacity attendees.',
+      }
+      final endsAt = event.endsAt;
+      if (endsAt != null && endsAt.isBefore(DateTime.now())) {
+        throw EventException(
+          code: 'EVENT_ENDED',
+          message: 'The event "${event.title}" has already ended.',
+        );
+      }
+
+      final existing = await _findRsvp(
+        session,
+        eventId,
+        authUserId,
+        transaction,
+      );
+
+      // Users who are already counted as going can keep their spot even when
+      // the event is full; only new or switching attendees hit the cap.
+      if (rsvpStatus == RsvpStatus.going &&
+          existing?.status != RsvpStatus.going) {
+        final capacity = event.capacity;
+        if (capacity != null) {
+          final goingCount = await Rsvp.db.count(
+            session,
+            where: (t) =>
+                t.eventId.equals(eventId) & t.status.equals(RsvpStatus.going),
+            transaction: transaction,
           );
+          if (goingCount >= capacity) {
+            throw EventException(
+              code: 'EVENT_CAPACITY_REACHED',
+              message:
+                  'The event "${event.title}" has reached its capacity of '
+                  '$capacity attendees.',
+            );
+          }
         }
       }
-    }
 
-    if (existing != null) {
-      existing.status = rsvpStatus;
-      return Rsvp.db.updateRow(session, existing);
-    }
+      if (existing != null) {
+        existing.status = rsvpStatus;
+        return Rsvp.db.updateRow(session, existing, transaction: transaction);
+      }
 
-    return Rsvp.db.insertRow(
-      session,
-      Rsvp(
-        eventId: eventId,
-        authUserId: authUserId,
-        status: rsvpStatus,
-      ),
-    );
+      return Rsvp.db.insertRow(
+        session,
+        Rsvp(
+          eventId: eventId,
+          authUserId: authUserId,
+          status: rsvpStatus,
+        ),
+        transaction: transaction,
+      );
+    });
   }
 
   /// Cancels the signed-in user's RSVP to an event. Cancelling an RSVP the
   /// user does not have is not an error.
+  ///
+  /// The event row is locked for the same reason as in [rsvp]: a cancel that
+  /// runs at the same time as an RSVP for the same user would otherwise be
+  /// able to delete the row the RSVP is about to update.
   Future<void> cancelRsvp(Session session, UuidValue eventId) async {
     final authUserId = _requireAuth(session);
-    await Rsvp.db.deleteWhere(
-      session,
-      where: (t) => t.eventId.equals(eventId) & t.authUserId.equals(authUserId),
-    );
+
+    await session.db.transaction((transaction) async {
+      // The event is read only to take the lock. An event that does not
+      // exist has no RSVPs either, so there is nothing to cancel and the
+      // call still succeeds.
+      await _lockEvent(session, eventId, transaction);
+
+      await Rsvp.db.deleteWhere(
+        session,
+        where: (t) =>
+            t.eventId.equals(eventId) & t.authUserId.equals(authUserId),
+        transaction: transaction,
+      );
+    });
   }
 
   /// Returns the signed-in user's RSVPs, newest first, with their events.
@@ -241,10 +272,30 @@ class EventsEndpoint extends Endpoint {
     Session session,
     UuidValue eventId,
     String authUserId,
+    Transaction transaction,
   ) {
     return Rsvp.db.findFirstRow(
       session,
       where: (t) => t.eventId.equals(eventId) & t.authUserId.equals(authUserId),
+      transaction: transaction,
+    );
+  }
+
+  /// Reads the event and takes an exclusive row lock on it.
+  ///
+  /// Every write to the RSVPs of an event goes through this lock, so the
+  /// capacity check and the write that follows it see a consistent view of
+  /// the event's attendees. Returns null when the event does not exist.
+  Future<Event?> _lockEvent(
+    Session session,
+    UuidValue eventId,
+    Transaction transaction,
+  ) {
+    return Event.db.findById(
+      session,
+      eventId,
+      transaction: transaction,
+      lockMode: LockMode.forUpdate,
     );
   }
 }
