@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:campus_quiz_client/campus_quiz_client.dart';
+import 'package:flutter/foundation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 
@@ -28,5 +27,14 @@ Future<void> initializeClient() async {
   client = Client(await serverUrl)
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = FlutterAuthSessionManager();
-  unawaited(client.auth.initialize());
+
+  // Restore the stored session before the first screen runs. Without this the
+  // app would not know that the student is already signed in and would create
+  // a new anonymous account on every cold start, which would leave their
+  // RSVPs behind.
+  try {
+    await client.auth.initialize();
+  } catch (e) {
+    debugPrint('Could not restore the stored session: $e');
+  }
 }
