@@ -1,0 +1,71 @@
+name: Auto merge
+
+# Merges a finished branch into main as soon as every check has passed, so a
+# change can go live without opening a pull request.
+on:
+  push:
+    branches:
+      - 'feat/**'
+      - 'fix/**'
+  # A branch can also be merged by hand from the Actions tab.
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch to merge into main'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+# One merge at a time, so two branches cannot push to main at the same time.
+concurrency:
+  group: auto-merge
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/analyze.yml
+
+  format:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/format.yml
+
+  tests:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/tests.yml
+
+  merge:
+    needs: [analyze, format, tests]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge the branch into main
+        env:
+          BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git fetch origin "$BRANCH" main
+          SHA=$(git rev-parse "origin/$BRANCH")
+
+          if git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "::notice::$BRANCH is already merged into main."
+            exit 0
+          fi
+
+          git checkout -B main origin/main
+          git merge --no-ff -m "Merge $BRANCH into main" "$SHA"
+          git push origin main

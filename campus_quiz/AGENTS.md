@@ -102,3 +102,15 @@ Frontend conventions to follow:
   the student's responses are left behind.
 - The guest responses are moved to the email account by the account screen
   after a sign-in, because the server gives every identity its own rows.
+
+Shipping a change:
+
+- The workflows live in `.github/workflows/` at the **root** of the repository,
+  not inside `campus_quiz/`. GitHub only reads them from the root.
+- A change goes live by pushing its branch: the `Auto merge` workflow runs the
+  analyze, format and test checks and merges the branch into `main` when they
+  pass. No pull request is needed. See the repository README for the details.
+- Before pushing, run the same checks locally: `dart analyze --fatal-infos` and
+  `dart format --set-exit-if-changed .` in `campus_quiz_server`, and
+  `flutter analyze`, `dart format --set-exit-if-changed .` and `flutter test` in
+  `campus_quiz_flutter`.

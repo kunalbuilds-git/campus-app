@@ -266,7 +266,17 @@ database.
 The same commands the CI runs are:
 
 ```sh
+cd campus_quiz/campus_quiz_server
 dart analyze --fatal-infos
 dart format --set-exit-if-changed .
 dart test
+
+cd campus_quiz/campus_quiz_flutter
+flutter analyze
+dart format --set-exit-if-changed .
+flutter test
 ```
+
+The workflows themselves live in `.github/workflows/` at the root of the
+repository, because that is where GitHub looks for them. See the
+[repository README](../README.md) for how a change is merged into `main`.
